@@ -72,20 +72,20 @@ export async function getBalance() {
   return handleResponse(res);
 }
 
-export async function addFunds(amount) {
+export async function addFunds(amount, category) {
   const res = await fetch(`${BASE_URL}/wallet/add-funds`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, category }),
   });
   return handleResponse(res);
 }
 
-export async function transfer(receiverEmail, amount, note) {
+export async function transfer(receiverEmail, amount, note, category) {
   const res = await fetch(`${BASE_URL}/wallet/transfer`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ receiverEmail, amount, note }),
+    body: JSON.stringify({ receiverEmail, amount, note, category }),
   });
   return handleResponse(res);
 }

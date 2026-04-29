@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Send, Users, ShieldCheck, AlertTriangle, X, Search } from 'lucide-react';
+import { Send, Users, AlertTriangle, X, Search } from 'lucide-react';
 import { transfer, searchUser, getMe } from './api';
+import { useCategories, CategoryPicker, CategoryManagerModal } from './CategoryManager';
 
 function fmtINR(v) {
   return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', minimumFractionDigits:2 }).format(v||0);
@@ -10,6 +11,7 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
   const [email,      setEmail]      = useState(initialEmail);
   const [amount,     setAmount]     = useState('');
   const [note,       setNote]       = useState('');
+  const [category,   setCategory]   = useState('');
   const [processing, setProcessing] = useState(false);
   const [success,    setSuccess]    = useState(false);
   const [error,      setError]      = useState('');
@@ -17,7 +19,9 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
   const [recipient,  setRecipient]  = useState(null);
   const [searching,  setSearching]  = useState(false);
   const [balance,    setBalance]    = useState(null);
-  const [result,     setResult]     = useState(null);
+  const [showCatMgr, setShowCatMgr] = useState(false);
+
+  const { categories, addCategory, deleteCategory } = useCategories();
 
   useEffect(() => { getMe().then(u => setBalance(u.balance)).catch(()=>{}); }, []);
 
@@ -37,9 +41,8 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
     if (!amount || parseFloat(amount) <= 0) { setError('Enter a valid amount'); return; }
     setError(''); setFraudWarn([]); setProcessing(true);
     try {
-      const res = await transfer(email, parseFloat(amount), note);
+      const res = await transfer(email, parseFloat(amount), note, category);
       if (res.fraudWarning?.length) setFraudWarn(res.fraudWarning);
-      setResult(res);
       setSuccess(true);
       setTimeout(() => onViewChange('dashboard'), 3500);
     } catch (err) {
@@ -63,11 +66,12 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
           <strong style={{ color:'#fff' }}>{fmtINR(amount)}</strong> sent to{' '}
           <strong style={{ color:'#fff' }}>{recipient?.name || email}</strong>
         </p>
+        {category && <p style={{ color:'rgba(255,255,255,0.35)', fontSize:13, marginTop:10 }}>Category: {category}</p>}
         {fraudWarn.length > 0 && (
           <div className="fraud-alert" style={{ marginTop:20, textAlign:'left' }}>
             <AlertTriangle size={16} style={{ color:'#fbbf24', flexShrink:0, marginTop:2 }} />
             <div>
-              <p style={{ fontWeight:700, fontSize:13, color:'#fbbf24', marginBottom:4 }}>⚠ Fraud flags (transaction still processed)</p>
+              <p style={{ fontWeight:700, fontSize:13, color:'#fbbf24', marginBottom:4 }}>⚠ Fraud flags</p>
               {fraudWarn.map((f,i) => <p key={i} style={{ fontSize:12, color:'rgba(255,255,255,0.6)' }}>{f}</p>)}
             </div>
           </div>
@@ -78,100 +82,116 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
   );
 
   return (
-    <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:40, paddingBottom:40 }}>
-      <div className="glass-card fade-in" style={{ padding: 'clamp(20px, 5vw, 44px)', width: '100%', maxWidth: 560 }}>
+    <>
+      <CategoryManagerModal
+        open={showCatMgr}
+        onClose={() => setShowCatMgr(false)}
+        categories={categories}
+        onAdd={addCategory}
+        onDelete={deleteCategory}
+      />
 
-        <form onSubmit={handleTransfer} style={{ display:'flex', flexDirection:'column', gap:22 }}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:40, paddingBottom:40 }}>
+        <div className="glass-card fade-in" style={{ padding: 'clamp(20px, 5vw, 44px)', width: '100%', maxWidth: 560 }}>
 
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Recipient Email</label>
-              {balance != null && <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>Balance: <strong style={{ color: '#fff' }}>{fmtINR(balance)}</strong></span>}
-            </div>
-            <div style={{ position:'relative' }}>
-              <Users size={18} style={{ position:'absolute', left:16, top:16, color:'rgba(255,255,255,0.35)', pointerEvents:'none' }} />
-              <input
-                type="email" required value={email}
-                onChange={e => { setEmail(e.target.value); setRecipient(null); setError(''); }}
-                onBlur={lookupRecipient}
-                placeholder="friend@example.com"
-                className="glass-input"
-                style={{ paddingLeft:48, paddingRight:46, paddingTop:14, paddingBottom:14, fontSize:15 }}
-              />
-              {searching && <Search size={16} style={{ position:'absolute', right:16, top:18, color:'rgba(255,255,255,0.35)', animation:'spin 0.8s linear infinite' }} />}
-            </div>
-            {recipient && (
-              <div className="fade-in-fast" style={{ marginTop:10, display:'flex', alignItems:'center', gap:10,
-                background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)',
-                borderRadius:14, padding:'10px 14px' }}>
-                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${recipient.name}&backgroundColor=transparent`}
-                  alt="" style={{ width:36, height:36, borderRadius:10 }} />
-                <div>
-                  <p style={{ fontWeight:700, fontSize:14, color:'#34d399' }}>{recipient.name}</p>
-                  <p style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>{recipient.email}</p>
-                </div>
+          <form onSubmit={handleTransfer} style={{ display:'flex', flexDirection:'column', gap:22 }}>
+
+            {/* recipient */}
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:10 }}>
+                <label style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', letterSpacing:'0.1em', textTransform:'uppercase' }}>Recipient Email</label>
+                {balance != null && <span style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.35)' }}>Balance: <strong style={{ color:'#fff' }}>{fmtINR(balance)}</strong></span>}
               </div>
-            )}
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Amount (₹)</label>
-              {balance != null && (
-                <button type="button" onClick={() => setAmount(String(Math.floor(balance)))}
-                  style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 8, padding: '3px 10px', cursor: 'pointer' }}
-                >Max</button>
+              <div style={{ position:'relative' }}>
+                <Users size={18} style={{ position:'absolute', left:16, top:16, color:'rgba(255,255,255,0.35)', pointerEvents:'none' }} />
+                <input type="email" required value={email}
+                  onChange={e => { setEmail(e.target.value); setRecipient(null); setError(''); }}
+                  onBlur={lookupRecipient}
+                  placeholder="friend@example.com"
+                  className="glass-input"
+                  style={{ paddingLeft:48, paddingRight:46, paddingTop:14, paddingBottom:14, fontSize:15 }}
+                />
+                {searching && <Search size={16} style={{ position:'absolute', right:16, top:18, color:'rgba(255,255,255,0.35)', animation:'spin 0.8s linear infinite' }} />}
+              </div>
+              {recipient && (
+                <div className="fade-in-fast" style={{ marginTop:10, display:'flex', alignItems:'center', gap:10,
+                  background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)',
+                  borderRadius:14, padding:'10px 14px' }}>
+                  <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${recipient.name}&backgroundColor=transparent`}
+                    alt="" style={{ width:36, height:36, borderRadius:10 }} />
+                  <div>
+                    <p style={{ fontWeight:700, fontSize:14, color:'#34d399' }}>{recipient.name}</p>
+                    <p style={{ fontSize:12, color:'rgba(255,255,255,0.45)' }}>{recipient.email}</p>
+                  </div>
+                </div>
               )}
             </div>
-            <div style={{ position:'relative' }}>
-              <span style={{ position:'absolute', left:16, top:14, fontSize:22, fontWeight:700, color:'rgba(255,255,255,0.35)' }}>₹</span>
-              <input
-                type="number" required min={1} value={amount}
-                onChange={e => setAmount(e.target.value)}
-                placeholder="0"
-                className="glass-input"
-                style={{ paddingLeft:42, fontSize:32, fontWeight:800, letterSpacing:'-1px', paddingTop:12, paddingBottom:12 }}
+
+            {/* amount */}
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                <label style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', letterSpacing:'0.1em', textTransform:'uppercase' }}>Amount (₹)</label>
+                {balance != null && (
+                  <button type="button" onClick={() => setAmount(String(Math.floor(balance)))}
+                    style={{ fontSize:12, fontWeight:700, color:'#a78bfa', background:'rgba(124,58,237,0.15)', border:'1px solid rgba(124,58,237,0.3)', borderRadius:8, padding:'3px 10px', cursor:'pointer' }}
+                  >Max</button>
+                )}
+              </div>
+              <div style={{ position:'relative' }}>
+                <span style={{ position:'absolute', left:16, top:14, fontSize:22, fontWeight:700, color:'rgba(255,255,255,0.35)' }}>₹</span>
+                <input type="number" required min={1} value={amount}
+                  onChange={e => setAmount(e.target.value)} placeholder="0"
+                  className="glass-input"
+                  style={{ paddingLeft:42, fontSize:32, fontWeight:800, letterSpacing:'-1px', paddingTop:12, paddingBottom:12 }}
+                />
+              </div>
+              <div style={{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' }}>
+                {[500,1000,2000,5000].map(v => (
+                  <button key={v} type="button" onClick={() => setAmount(String(v))}
+                    style={{ fontSize:13, fontWeight:600, padding:'6px 14px', borderRadius:8, cursor:'pointer', transition:'all 0.15s',
+                      background: amount===String(v) ? 'rgba(124,58,237,0.3)' : 'var(--bg-surface)',
+                      border:`1px solid ${amount===String(v) ? 'rgba(124,58,237,0.5)' : 'var(--border)'}`,
+                      color: amount===String(v) ? '#a78bfa' : 'rgba(255,255,255,0.55)' }}
+                  >₹{v.toLocaleString('en-IN')}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* category */}
+            <div>
+              <label style={{ display:'block', fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Category</label>
+              <CategoryPicker
+                selected={category}
+                onChange={setCategory}
+                categories={categories}
+                onManage={() => setShowCatMgr(true)}
               />
             </div>
-            {/* quick amounts */}
-            <div style={{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' }}>
-              {[500,1000,2000,5000].map(v => (
-                <button key={v} type="button" onClick={() => setAmount(String(v))}
-                  style={{ fontSize:13, fontWeight:600, padding:'6px 14px', borderRadius:8, cursor:'pointer', transition:'all 0.15s',
-                    background: amount===String(v) ? 'rgba(124,58,237,0.3)' : 'var(--bg-surface)',
-                    border:`1px solid ${amount===String(v) ? 'rgba(124,58,237,0.5)' : 'var(--border)'}`,
-                    color: amount===String(v) ? '#a78bfa' : 'rgba(255,255,255,0.55)' }}
-                >₹{v.toLocaleString('en-IN')}</button>
-              ))}
+
+            {/* note */}
+            <div>
+              <label style={{ display:'block', fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Note (optional)</label>
+              <input type="text" value={note} onChange={e => setNote(e.target.value)}
+                placeholder="Dinner split, rent, etc."
+                className="glass-input" style={{ paddingTop:14, paddingBottom:14, fontSize:15 }} />
             </div>
-          </div>
 
-          {/* note */}
-          <div>
-            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)',
-              letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Note (optional)</label>
-            <input type="text" value={note} onChange={e => setNote(e.target.value)}
-              placeholder="Dinner split, rent, etc."
-              className="glass-input" style={{ paddingTop:14, paddingBottom:14, fontSize:15 }} />
-          </div>
+            {error && (
+              <div style={{ display:'flex', alignItems:'flex-start', gap:10, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:14, padding:'12px 16px' }}>
+                <AlertTriangle size={16} style={{ color:'#f87171', flexShrink:0, marginTop:2 }} />
+                <span style={{ color:'#f87171', fontSize:14 }}>{error}</span>
+                <button type="button" onClick={() => setError('')} style={{ marginLeft:'auto', background:'none', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer' }}><X size={14} /></button>
+              </div>
+            )}
 
-          {/* errors */}
-          {error && (
-            <div style={{ display:'flex', alignItems:'flex-start', gap:10, background:'rgba(239,68,68,0.08)',
-              border:'1px solid rgba(239,68,68,0.25)', borderRadius:14, padding:'12px 16px' }}>
-              <AlertTriangle size={16} style={{ color:'#f87171', flexShrink:0, marginTop:2 }} />
-              <span style={{ color:'#f87171', fontSize:14 }}>{error}</span>
-              <button type="button" onClick={() => setError('')} style={{ marginLeft:'auto', background:'none', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer' }}><X size={14} /></button>
-            </div>
-          )}
-
-          <button type="submit" disabled={processing}
-            className="btn-primary"
-            style={{ height:56, fontSize:16, borderRadius:18, marginTop:4, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-            {processing ? <><div className="loader loader-sm" /> Processing…</> : <><Send size={18} /> Confirm Transfer</>}
-          </button>
-        </form>
+            <button type="submit" disabled={processing}
+              className="btn-primary"
+              style={{ height:56, fontSize:16, borderRadius:18, marginTop:4, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+              {processing ? <><div className="loader loader-sm" /> Processing…</> : <><Send size={18} /> Confirm Transfer</>}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
