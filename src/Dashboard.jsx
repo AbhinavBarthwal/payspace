@@ -189,10 +189,24 @@ export default function Dashboard({ onViewChange, onViewTx }) {
             <div style={{ position: 'absolute', top: -60, right: -60, width: 260, height: 260,
               background: 'radial-gradient(circle, rgba(124,58,237,0.2), transparent 70%)', pointerEvents: 'none' }} />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, position: 'relative' }}>
-              <Activity size={18} style={{ color: '#10b981' }} />
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Main Balance</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Activity size={18} style={{ color: '#10b981' }} />
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Main Balance</span>
+              </div>
+              <button onClick={load} disabled={loading}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: 4, borderRadius: 8, display: 'flex', transition: 'color 0.2s' }}
+                title="Refresh"
+              >
+                <RefreshCw size={15} style={{ animation: loading ? 'spin 0.8s linear infinite' : 'none' }} />
+              </button>
             </div>
+
+            {user && (
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', fontWeight: 500, marginBottom: 8, position: 'relative' }}>
+                {new Date().getHours() < 12 ? '🌤 Good morning' : new Date().getHours() < 18 ? '☀️ Good afternoon' : '🌙 Good evening'}, <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{user.name?.split(' ')[0]}</strong>
+              </p>
+            )}
 
             {loading ? (
               <div className="skeleton" style={{ height: 72, width: 220, marginBottom: 16 }} />

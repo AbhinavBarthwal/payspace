@@ -122,8 +122,8 @@ export default function App() {
       }
     };
 
-    const interval = setInterval(checkTx, 1000);
-    checkTx(); // Initial check
+    const interval = setInterval(checkTx, 30000);
+    checkTx();
     return () => clearInterval(interval);
   }, [isAuthenticated, lastTxId]);
 

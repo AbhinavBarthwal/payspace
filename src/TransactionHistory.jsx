@@ -50,11 +50,23 @@ export default function TransactionHistory({ onViewChange, onViewTx }) {
 
   const filtered = mapped.filter(tx => {
     const matchType = filter === 'all' || tx.type === filter;
-    const matchSearch = !search || tx.title.toLowerCase().includes(search.toLowerCase()) || 
+    const matchSearch = !search || tx.title.toLowerCase().includes(search.toLowerCase()) ||
       tx.category.toLowerCase().includes(search.toLowerCase()) ||
       (tx.counterparty || '').toLowerCase().includes(search.toLowerCase());
     return matchType && matchSearch;
   });
+
+  // Group by date
+  const grouped = filtered.reduce((acc, tx) => {
+    const d = new Date(tx.rawTx.timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now - d) / 86400000);
+    const label = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday'
+      : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+    if (!acc[label]) acc[label] = [];
+    acc[label].push(tx);
+    return acc;
+  }, {});
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 fade-in pt-4 md:pt-8">
@@ -101,38 +113,47 @@ export default function TransactionHistory({ onViewChange, onViewTx }) {
             {mapped.length === 0 && <p className="mt-2">Make your first transfer or add funds to get started!</p>}
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map(tx => (
-              <div
-                key={tx.id}
-                onClick={() => onViewTx(tx)}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-5 md:p-6 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-[28px] transition-all cursor-pointer group gap-4 sm:gap-0"
-              >
-                <div className="flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center shrink-0 ${tx.type === 'credit' ? 'bg-green-400/10 text-green-400' : 'bg-white/10 text-white/80'}`}>
-                     {tx.type === 'credit' ? <ArrowDownRight className="w-7 h-7" /> : <ArrowUpRight className="w-7 h-7" />}
-                  </div>
-                  <div>
-                    <p className="font-bold text-xl tracking-tight mb-0.5 truncate max-w-[150px] sm:max-w-none">{tx.title}</p>
-                    <p className="text-sm text-white/50 font-medium">
-                      {tx.date} 
-                      <span className="hide-mobile">
-                        <span className="mx-2 text-white/20">•</span> 
-                        <span className="bg-white/5 px-2 py-1 rounded-md text-white/70">{tx.category}</span>
-                      </span>
-                      {tx.counterparty && <span className="ml-2 text-white/40 hide-tablet">· {tx.counterparty}</span>}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto pl-[76px] sm:pl-0 gap-6">
-                  <div className={`font-bold text-2xl tracking-tighter ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
-                    {tx.amount}
-                  </div>
-                  <ChevronRight className="w-6 h-6 text-white/20 group-hover:text-white/80 transition-colors" />
+          <div className="space-y-6">
+            {Object.entries(grouped).map(([dateLabel, txs]) => (
+              <div key={dateLabel}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, paddingLeft: 8 }}>
+                  {dateLabel}
+                </p>
+                <div className="space-y-2">
+                  {txs.map(tx => (
+                    <div
+                      key={tx.id}
+                      onClick={() => onViewTx(tx)}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-5 md:p-6 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-[28px] transition-all cursor-pointer group gap-4 sm:gap-0"
+                    >
+                      <div className="flex items-center gap-5">
+                        <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center shrink-0 ${tx.type === 'credit' ? 'bg-green-400/10 text-green-400' : 'bg-white/10 text-white/80'}`}>
+                           {tx.type === 'credit' ? <ArrowDownRight className="w-7 h-7" /> : <ArrowUpRight className="w-7 h-7" />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-xl tracking-tight mb-0.5 truncate max-w-[150px] sm:max-w-none">{tx.title}</p>
+                          <p className="text-sm text-white/50 font-medium">
+                            {tx.date}
+                            <span className="hide-mobile">
+                              <span className="mx-2 text-white/20">•</span>
+                              <span className="bg-white/5 px-2 py-1 rounded-md text-white/70">{tx.category}</span>
+                            </span>
+                            {tx.counterparty && <span className="ml-2 text-white/40 hide-tablet">· {tx.counterparty}</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto pl-[76px] sm:pl-0 gap-6">
+                        <div className={`font-bold text-2xl tracking-tighter ${tx.type === 'credit' ? 'text-green-400' : 'text-white'}`}>
+                          {tx.amount}
+                        </div>
+                        <ChevronRight className="w-6 h-6 text-white/20 group-hover:text-white/80 transition-colors" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
+          </div>
           </div>
         )}
       </div>

@@ -114,10 +114,15 @@ export default function Transfer({ onViewChange, initialEmail = '' }) {
             )}
           </div>
 
-          {/* amount */}
           <div>
-            <label style={{ display:'block', fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)',
-              letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:10 }}>Amount (₹)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Amount (₹)</label>
+              {balance != null && (
+                <button type="button" onClick={() => setAmount(String(Math.floor(balance)))}
+                  style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', borderRadius: 8, padding: '3px 10px', cursor: 'pointer' }}
+                >Max</button>
+              )}
+            </div>
             <div style={{ position:'relative' }}>
               <span style={{ position:'absolute', left:16, top:14, fontSize:22, fontWeight:700, color:'rgba(255,255,255,0.35)' }}>₹</span>
               <input

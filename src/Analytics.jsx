@@ -103,6 +103,8 @@ export default function Analytics() {
   const totalOut = parseFloat(data?.totalOutgoing || 0);
   const totalIn  = parseFloat(data?.totalIncoming || 0);
   const net      = parseFloat(data?.netSavings || 0);
+  const txCount  = (data?.debitCount || 0) + (data?.creditCount || 0);
+  const avgTx    = txCount > 0 ? totalOut / Math.max(data?.debitCount || 1, 1) : 0;
   const maxCat   = Math.max(...cats.map(c => parseFloat(c.total)), 1);
 
   const fmtMonth = (s) => {
@@ -180,9 +182,19 @@ export default function Analytics() {
           {loading ? (
             [1,2,3].map(i => <div key={i} className="skeleton" style={{ height:64 }} />)
           ) : (<>
-            <SummaryRow label="Total Incoming" value={`+${fmtINR(totalIn)}`} color="#10b981" />
-            <SummaryRow label="Total Outgoing" value={`-${fmtINR(totalOut)}`} color="rgba(255,255,255,0.85)" />
-            <SummaryRow label="Net Savings" value={`${net>=0?'':'-'}${fmtINR(Math.abs(net))}`} color={net>=0?'#a78bfa':'#f87171'} big />
+            <SummaryRow label="Total Incoming"   value={`+${fmtINR(totalIn)}`}  color="#10b981" />
+            <SummaryRow label="Total Outgoing"   value={`-${fmtINR(totalOut)}`} color="rgba(255,255,255,0.85)" />
+            <SummaryRow label="Net Savings"      value={`${net>=0?'':'-'}${fmtINR(Math.abs(net))}`} color={net>=0?'#a78bfa':'#f87171'} big />
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:4 }}>
+              <div style={{ background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:16, padding:'14px 18px', textAlign:'center' }}>
+                <p style={{ fontSize:11, color:'rgba(255,255,255,0.4)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:6 }}>Transactions</p>
+                <p style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.5px' }}>{txCount}</p>
+              </div>
+              <div style={{ background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:16, padding:'14px 18px', textAlign:'center' }}>
+                <p style={{ fontSize:11, color:'rgba(255,255,255,0.4)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:6 }}>Avg Spend</p>
+                <p style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.5px' }}>{avgTx > 0 ? fmtINR(avgTx) : '—'}</p>
+              </div>
+            </div>
           </>)}
         </div>
       </div>
