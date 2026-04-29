@@ -38,6 +38,7 @@ export default function TransactionHistory({ onViewChange, onViewTx }) {
     title: tx.description || (tx.type === 'CREDIT' ? 'Received' : 'Sent'),
     category: tx.category,
     date: timeAgo(tx.timestamp),
+    rawDate: new Date(tx.timestamp).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     amount: `${tx.type === 'CREDIT' ? '+' : '-'}${formatINR(tx.amount)}`,
     type: tx.type === 'CREDIT' ? 'credit' : 'debit',
     status: 'Completed',
