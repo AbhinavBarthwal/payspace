@@ -4,6 +4,17 @@ import {
   Lock, Globe, ChevronRight, Wallet, BarChart3, Send, Star
 } from 'lucide-react';
 
+/* ── responsive hook ── */
+function useMobile(breakpoint = 768) {
+  const [mobile, setMobile] = useState(() => window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handler = () => setMobile(window.innerWidth < breakpoint);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, [breakpoint]);
+  return mobile;
+}
+
 /* ── animated counter ── */
 function useCounter(target, duration = 1800, start = false) {
   const [val, setVal] = useState(0);
@@ -130,6 +141,7 @@ function Step({ num, title, desc }) {
 ══════════════════════════════════════════════════════ */
 export default function Landing({ onGetStarted }) {
   const [statsRef, statsInView] = useInView();
+  const isMobile = useMobile();
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100vh', fontFamily: "'Inter',sans-serif" }}>
@@ -145,62 +157,75 @@ export default function Landing({ onGetStarted }) {
           </div>
           <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px' }}>MyWallet</span>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             onClick={onGetStarted}
             className="btn-ghost"
-            style={{ padding: '9px 20px', fontSize: 14 }}
+            style={{ padding: isMobile ? '8px 14px' : '9px 20px', fontSize: 13 }}
           >
             Sign In
           </button>
           <button
             onClick={onGetStarted}
             className="btn-purple"
-            style={{ padding: '9px 20px', fontSize: 14 }}
+            style={{ padding: isMobile ? '8px 14px' : '9px 20px', fontSize: 13 }}
           >
-            Get Started →
+            {isMobile ? 'Start →' : 'Get Started →'}
           </button>
         </div>
       </nav>
 
       {/* ════════ HERO ════════ */}
-      <section className="landing-hero" style={{ paddingTop: 100, paddingBottom: 80 }}>
-        <div style={{ maxWidth: 1100, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+      <section className="landing-hero" style={{ paddingTop: isMobile ? 90 : 100, paddingBottom: isMobile ? 60 : 80 }}>
+        <div style={{
+          maxWidth: 1100, width: '100%',
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? 48 : 80,
+          alignItems: 'center'
+        }}>
 
           {/* left */}
-          <div>
-            <div className="hero-badge" style={{ marginBottom: 28 }}>
+          <div style={{ textAlign: isMobile ? 'center' : 'left' }}>
+            <div className="hero-badge" style={{ marginBottom: 28, display: 'inline-flex' }}>
               <div className="dot" />
               Secure · Fast · Intelligent
             </div>
 
             <h1 className="fade-in" style={{
-              fontSize: 'clamp(40px,5vw,68px)', fontWeight: 900,
-              lineHeight: 1.05, letterSpacing: '-2.5px', marginBottom: 24
+              fontSize: isMobile ? 'clamp(36px,10vw,52px)' : 'clamp(40px,5vw,68px)',
+              fontWeight: 900, lineHeight: 1.05, letterSpacing: '-2px', marginBottom: 20
             }}>
               Your Money,<br />
               <span className="gradient-text">Reimagined.</span>
             </h1>
 
             <p className="fade-in" style={{
-              fontSize: 18, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7,
-              maxWidth: 460, marginBottom: 40, animationDelay: '0.1s'
+              fontSize: isMobile ? 15 : 18, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7,
+              maxWidth: isMobile ? '100%' : 460, marginBottom: 36, animationDelay: '0.1s'
             }}>
               Send money instantly, track your spending with AI-powered insights,
               and stay protected with real-time fraud detection — all in one place.
             </p>
 
-            <div className="fade-in" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', animationDelay: '0.2s' }}>
-              <button onClick={onGetStarted} className="btn-primary" style={{ fontSize: 16, padding: '16px 32px', borderRadius: 16 }}>
+            <div className="fade-in" style={{
+              display: 'flex', gap: 12, flexWrap: 'wrap', animationDelay: '0.2s',
+              justifyContent: isMobile ? 'center' : 'flex-start'
+            }}>
+              <button onClick={onGetStarted} className="btn-primary" style={{ fontSize: isMobile ? 15 : 16, padding: isMobile ? '14px 28px' : '16px 32px', borderRadius: 16 }}>
                 Start for Free
               </button>
-              <button onClick={onGetStarted} className="btn-ghost" style={{ fontSize: 16, padding: '16px 28px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={onGetStarted} className="btn-ghost" style={{ fontSize: isMobile ? 15 : 16, padding: isMobile ? '14px 22px' : '16px 28px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Sign In <ChevronRight size={18} />
               </button>
             </div>
 
             {/* trust badges */}
-            <div className="fade-in" style={{ display: 'flex', gap: 24, marginTop: 48, alignItems: 'center', animationDelay: '0.3s' }}>
+            <div className="fade-in" style={{
+              display: 'flex', gap: isMobile ? 16 : 24, marginTop: 40, alignItems: 'center',
+              animationDelay: '0.3s', flexWrap: 'wrap',
+              justifyContent: isMobile ? 'center' : 'flex-start'
+            }}>
               {[
                 { icon: <Shield size={16} />, text: 'Bank-grade Security' },
                 { icon: <Zap size={16} />, text: 'Instant Transfers' },
@@ -222,8 +247,8 @@ export default function Landing({ onGetStarted }) {
       </section>
 
       {/* ════════ STATS ════════ */}
-      <section ref={statsRef} style={{ padding: '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }} className="stagger">
+      <section ref={statsRef} style={{ padding: isMobile ? '40px 20px' : '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }} className="stagger">
           <StatItem label="Registered Users"     value={12400} suffix="+" inView={statsInView} />
           <StatItem label="Transactions / Day"   value={38000} suffix="+" inView={statsInView} />
           <StatItem label="Fraud Blocked"        value={99.8}  suffix="%" inView={statsInView} prefix="" />
@@ -231,19 +256,19 @@ export default function Landing({ onGetStarted }) {
         </div>
       </section>
 
-      <hr className="section-divider" style={{ margin: '20px 40px' }} />
+      <hr className="section-divider" style={{ margin: isMobile ? '10px 20px' : '20px 40px' }} />
 
       {/* ════════ FEATURES ════════ */}
-      <section style={{ padding: '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+      <section style={{ padding: isMobile ? '40px 20px' : '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 36 : 56 }}>
           <p style={{ color: '#a78bfa', fontWeight: 600, fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>
             Why MyWallet
           </p>
-          <h2 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1.1 }}>
+          <h2 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 800, letterSpacing: '-1.5px', lineHeight: 1.1 }}>
             Built for the <span className="gradient-text">modern era</span>
           </h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: 16 }}>
           <FeatureCard
             delay={0.05}
             icon={<Shield size={24} color="#a78bfa" />}
@@ -289,12 +314,12 @@ export default function Landing({ onGetStarted }) {
         </div>
       </section>
 
-      <hr className="section-divider" style={{ margin: '20px 40px' }} />
+      <hr className="section-divider" style={{ margin: isMobile ? '10px 20px' : '20px 40px' }} />
 
       {/* ════════ HOW IT WORKS ════════ */}
-      <section style={{ padding: '40px 40px 80px', maxWidth: 800, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-1.2px' }}>
+      <section style={{ padding: isMobile ? '30px 20px 60px' : '40px 40px 80px', maxWidth: 800, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 48 }}>
+          <h2 style={{ fontSize: 'clamp(22px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-1.2px' }}>
             Up and running in <span className="gradient-text">3 steps</span>
           </h2>
         </div>
@@ -306,7 +331,7 @@ export default function Landing({ onGetStarted }) {
       </section>
 
       {/* ════════ CTA ════════ */}
-      <section style={{ padding: '80px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: isMobile ? '60px 20px' : '80px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', inset: 0,
           background: 'radial-gradient(ellipse 60% 80% at 50% 50%, rgba(124,58,237,0.12), transparent)',
@@ -331,9 +356,14 @@ export default function Landing({ onGetStarted }) {
       {/* ════════ FOOTER ════════ */}
       <footer style={{
         borderTop: '1px solid var(--border)',
-        padding: '28px 40px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        color: 'rgba(255,255,255,0.35)', fontSize: 13
+        padding: isMobile ? '24px 20px' : '28px 40px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? 8 : 0,
+        color: 'rgba(255,255,255,0.35)', fontSize: 13,
+        textAlign: isMobile ? 'center' : 'left'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Wallet size={16} color="rgba(255,255,255,0.35)" />
