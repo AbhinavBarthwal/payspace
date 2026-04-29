@@ -1,7 +1,6 @@
 // Central API service - all backend calls go through here
 
-const HOST = window.location.hostname;
-const BASE_URL = `http://${HOST}:8081/api`;
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
 function getToken() {
   return localStorage.getItem('token');
