@@ -246,17 +246,7 @@ export default function Landing({ onGetStarted }) {
         </div>
       </section>
 
-      {/* ════════ STATS ════════ */}
-      <section ref={statsRef} style={{ padding: isMobile ? '40px 20px' : '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: 12 }} className="stagger">
-          <StatItem label="Registered Users"     value={12400} suffix="+" inView={statsInView} />
-          <StatItem label="Transactions / Day"   value={38000} suffix="+" inView={statsInView} />
-          <StatItem label="Fraud Blocked"        value={99.8}  suffix="%" inView={statsInView} prefix="" />
-          <StatItem label="Avg Response (ms)"    value={42}    inView={statsInView} />
-        </div>
-      </section>
 
-      <hr className="section-divider" style={{ margin: isMobile ? '10px 20px' : '20px 40px' }} />
 
       {/* ════════ FEATURES ════════ */}
       <section style={{ padding: isMobile ? '40px 20px' : '60px 40px', maxWidth: 1100, margin: '0 auto' }}>
