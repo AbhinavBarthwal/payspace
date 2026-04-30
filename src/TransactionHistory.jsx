@@ -154,7 +154,6 @@ export default function TransactionHistory({ onViewChange, onViewTx }) {
               </div>
             ))}
           </div>
-          </div>
         )}
       </div>
     </div>
